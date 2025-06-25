@@ -4,18 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       product_id:
-        description: "Product ID (numbers only)"
+        description: "Product ID"
         required: true
       src_pos:
-        description: "Which picture should go first? (1-based)"
+        description: "Picture position (1-based)"
         required: true
 
 jobs:
   reorder:
     runs-on: ubuntu-latest
-    env:
-      HD_USER: ${{ secrets.HD_USER }}
-      HD_PASS: ${{ secrets.HD_PASS }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +25,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser chromium-chromedriver
-          # ★ google-chrome adı bekleyen kütüphaneler için sembolik link
           sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome
           sudo ln -sf /usr/bin/chromedriver      /usr/local/bin/chromedriver
 
