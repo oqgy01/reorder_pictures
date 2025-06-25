@@ -18,8 +18,8 @@ def run(product_id: int, src_pos: int):
     BASE   = "https://www.siparis.haydigiy.com"
     LOGIN  = f"{BASE}/kullanici-giris/?ReturnUrl=%2Fadmin"
     PROD   = f"{BASE}/admin/product/edit/{product_id}"
-    USER   = os.environ["HD_USER"]      # GH Secret
-    PASSWD = os.environ["HD_PASS"]
+    USER   = os.environ["mustafa_kod@haydigiy.com"]      # GH Secret
+    PASSWD = os.environ["123456"]
 
     picsel = "#productpictures-grid .picture-item"
     try:
