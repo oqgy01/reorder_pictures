@@ -1,10 +1,7 @@
 """
 Liste parametresiyle toplu sıralama.
-
-Çağrı örneği
-    python reorder_pictures.py --batch "231321:2,235412:5"
+python reorder_pictures.py --batch "231321:2,235412:5"
 """
-
 import time, argparse
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -18,7 +15,6 @@ USER   = "mustafa_kod@haydigiy.com"
 PASSWD = "123456"
 # ────────────────────────────────────────
 
-
 def init_driver():
     opts = Options()
     opts.add_argument("--headless=new")
@@ -26,10 +22,8 @@ def init_driver():
     opts.add_argument("--incognito")
     opts.add_argument("--window-size=1920,1080")
     opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-    # GitHub runner’daki Chromium binari
-    opts.binary_location = "/usr/bin/chromium-browser"
+    opts.binary_location = "/usr/bin/chromium-browser"   # GitHub runner
     return webdriver.Chrome(service=Service(), options=opts)
-
 
 def login(drv):
     BASE  = "https://www.siparis.haydigiy.com"
@@ -43,7 +37,6 @@ def login(drv):
     drv.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
     WebDriverWait(drv, 15).until(EC.url_contains("/admin"))
 
-
 def reorder_one(drv, product_id: int, src_pos: int):
     BASE   = "https://www.siparis.haydigiy.com"
     PROD   = f"{BASE}/admin/product/edit/{product_id}"
@@ -56,12 +49,10 @@ def reorder_one(drv, product_id: int, src_pos: int):
     ).click()
 
     WebDriverWait(drv, 15).until(
-        lambda d: len(d.find_elements(By.CSS_SELECTOR, PICSEL)) >= src_pos + 1
-    )
+        lambda d: len(d.find_elements(By.CSS_SELECTOR, PICSEL)) >= src_pos + 1)
     WebDriverWait(drv, 15).until(
         lambda d: d.execute_script(
-            "return $('#productpictures-grid').data('ui-sortable')!==undefined")
-    )
+            "return $('#productpictures-grid').data('ui-sortable')!==undefined"))
 
     js = """
     var idx = arguments[0];
@@ -74,18 +65,16 @@ def reorder_one(drv, product_id: int, src_pos: int):
     return 'ok';
     """
     if drv.execute_script(js, src_pos) != "ok":
-        raise RuntimeError(`sortable trigger failed (${product_id})`)
+        # ★ burada f-string kullandık
+        raise RuntimeError(f"sortable trigger failed ({product_id})")
 
     time.sleep(1.0)
     drv.find_element(By.CSS_SELECTOR, "button.btn-primary[name='save']").click()
     WebDriverWait(drv, 15).until_not(
-        EC.presence_of_element_located((By.CSS_SELECTOR, ".k-loading"))
-    )
+        EC.presence_of_element_located((By.CSS_SELECTOR, ".k-loading")))
     print(f"✅ {product_id}: {src_pos+1}. görsel başa alındı")
 
-
 def main(batch_str: str):
-    # "231321:2,235412:5"  →  [(231321,1), (235412,4)]
     pairs = [
         (int(pid), int(pos) - 1)
         for pid, pos in (p.split(":") for p in batch_str.split(",") if p.strip())
@@ -98,7 +87,6 @@ def main(batch_str: str):
             reorder_one(drv, pid, pos)
     finally:
         drv.quit()
-
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
