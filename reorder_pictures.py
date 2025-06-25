@@ -1,4 +1,4 @@
-import os, time, argparse, colorama
+import time, argparse
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -6,26 +6,29 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# ────────────────  GİRİŞ BİLGİLERİ  ────────────────
+USER   = "mustafa_kod@haydigiy.com"
+PASSWD = "123456"
+# ───────────────────────────────────────────────────
+
 def run(product_id: int, src_pos: int):
     opts = Options()
     opts.add_argument("--headless=new")
     opts.add_argument("--disable-gpu")
     opts.add_argument("--window-size=1920,1080")
     opts.add_argument("--incognito")
-    
-    # ★ bunu ekle → Selenium’a “Chrome ikili dosyası şu” de
-    opts.binary_location = "/usr/bin/chromium-browser"
-    
     opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+    # GitHub runner’da Chromium yolu
+    opts.binary_location = "/usr/bin/chromium-browser"
+
+    drv = webdriver.Chrome(service=Service(), options=opts)
 
     BASE   = "https://www.siparis.haydigiy.com"
     LOGIN  = f"{BASE}/kullanici-giris/?ReturnUrl=%2Fadmin"
     PROD   = f"{BASE}/admin/product/edit/{product_id}"
-    USER   = os.environ["mustafa_kod@haydigiy.com"]      # GH Secret
-    PASSWD = os.environ["123456"]
 
-    picsel = "#productpictures-grid .picture-item"
     try:
+        # 1) Giriş -----------------------------------------------------------------
         drv.get(LOGIN)
         WebDriverWait(drv, 15).until(
             EC.visibility_of_element_located((By.NAME, "EmailOrPhone"))
@@ -33,6 +36,7 @@ def run(product_id: int, src_pos: int):
         drv.find_element(By.NAME, "Password").send_keys(PASSWD)
         drv.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
+        # 2) Ürün & Resim Sekmesi ---------------------------------------------------
         WebDriverWait(drv, 15).until(EC.url_contains("/admin"))
         drv.get(PROD)
         WebDriverWait(drv, 15).until(
@@ -40,13 +44,15 @@ def run(product_id: int, src_pos: int):
                 (By.CSS_SELECTOR, "li[data-tab-name='tab-pictures']"))
         ).click()
 
+        # 3) Resimlerin Yüklenmesini Bekle -----------------------------------------
+        picsel = "#productpictures-grid .picture-item"
         WebDriverWait(drv, 15).until(
-            lambda d: len(d.find_elements(By.CSS_SELECTOR, picsel)) >= src_pos + 1
-        )
+            lambda d: len(d.find_elements(By.CSS_SELECTOR, picsel)) >= src_pos + 1)
         WebDriverWait(drv, 15).until(
             lambda d: d.execute_script(
                 "return $('#productpictures-grid').data('ui-sortable')!==undefined"))
 
+        # 4) Sırayı Değiştir --------------------------------------------------------
         js = """
         var idx = arguments[0];
         var $list = $('#productpictures-grid');
@@ -60,14 +66,14 @@ def run(product_id: int, src_pos: int):
         if drv.execute_script(js, src_pos) != "ok":
             raise RuntimeError("sortable trigger failed")
 
+        # 5) Kaydet ---------------------------------------------------------------
         time.sleep(1.5)
-        drv.find_element(By.CSS_SELECTOR, "button.btn-primary[name='save']").click()
+        drv.find_element(By.CSS_SELECTOR,
+                         "button.btn-primary[name='save']").click()
         WebDriverWait(drv, 15).until_not(
             EC.presence_of_element_located((By.CSS_SELECTOR, ".k-loading")))
 
-        print(colorama.Fore.GREEN +
-              f"Ürün {product_id}: {src_pos+1}. görsel başa alındı." +
-              colorama.Style.RESET_ALL)
+        print(f"✅ Ürün {product_id}: {src_pos+1}. görsel başa alındı.")
     finally:
         drv.quit()
 
@@ -75,6 +81,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--product-id", required=True, type=int)
     ap.add_argument("--src-pos",    required=True, type=int,
-                    help="1-den başlar (3 = üçüncü görsel)")
-    a = ap.parse_args()
-    run(a.product_id, a.src_pos-1)
+                    help="1’den başlar (örn. 3 = üçüncü görsel)")
+    args = ap.parse_args()
+    run(args.product_id, args.src_pos - 1)
