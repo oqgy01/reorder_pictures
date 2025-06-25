@@ -3,33 +3,24 @@ name: ReorderPictures
 on:
   workflow_dispatch:
     inputs:
-      product_id:
-        description: "Product ID"
-        required: true
-      src_pos:
-        description: "Picture position (1-based)"
-        required: true
+      product_id: { description: "Ürün ID",   required: true }
+      src_pos:    { description: "Görsel sıra", required: true }
 
 jobs:
   reorder:
     runs-on: ubuntu-latest
 
+    # ★ Workflow’un tamamı bu imajda döner
+    container: selenium/standalone-chrome:125.0     # versiyon sabitleyebilirsiniz
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-
-      - name: Install Chrome & driver
+      - name: Install Python & deps      # Chrome zaten var ➜ sadece Python
         run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser chromium-chromedriver
-          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome
-          sudo ln -sf /usr/bin/chromedriver      /usr/local/bin/chromedriver
-
-      - name: Install deps
-        run: pip install selenium colorama
+          apt-get update -qq
+          apt-get install -y python3 python3-pip
+          pip install selenium
 
       - name: Run script
         run: |
