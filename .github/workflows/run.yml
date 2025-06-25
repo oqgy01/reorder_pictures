@@ -3,34 +3,36 @@ name: ReorderPictures
 on:
   workflow_dispatch:
     inputs:
-      product_id: { description: "Ürün ID",   required: true }
-      src_pos:    { description: "Görsel sıra", required: true }
+      product_id:
+        description: "Product ID"
+        required: true
+      src_pos:
+        description: "Picture position (1-based)"
+        required: true
 
 jobs:
   reorder:
     runs-on: ubuntu-latest
 
-    services:
-      selenium:
-        image: selenium/standalone-chrome:125.0
-        options: >-
-          --shm-size 2g        # büyük shared-mem, OTA yüklemeler için
-
     steps:
-      - uses: actions/checkout@v4          # ← artık host’ta
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Install Python
         uses: actions/setup-python@v5
-        with: { python-version: "3.12", cache: "pip" }
+        with: { python-version: "3.12" }
+
+      - name: Install Chrome & driver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome
+          sudo ln -sf /usr/bin/chromedriver      /usr/local/bin/chromedriver
 
       - name: Install deps
-        run: pip install selenium
+        run: pip install selenium colorama
 
-      - name: Run script (remote webdriver)
-        env:
-          SELENIUM_REMOTE_URL: "http://localhost:4444/wd/hub"
+      - name: Run script
         run: |
           python reorder_pictures.py \
             --product-id ${{ github.event.inputs.product_id }} \
             --src-pos    ${{ github.event.inputs.src_pos }}
-
