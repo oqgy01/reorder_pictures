@@ -1,35 +1,40 @@
-name: Python Script Runner
+name: ReorderPictures
 
 on:
   workflow_dispatch:
     inputs:
       batch:
-        description: 'Batch parameter (e.g., "231321:2,235412:5")'
+        description: "productId:srcPos,productId:srcPos …  (örn. 231321:2,235412:5)"
         required: true
-        type: string
 
 jobs:
-  run-script:
+  reorder:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
-        
-    - name: Install dependencies
-      run: |
-        pip install selenium
-        
-    - name: Install Chrome
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y chromium-browser
-        
-    - name: Run reorder script
-      run: |
-        python reorder_pictures.py --batch "${{ github.event.inputs.batch }}"
+      # Kaynak kodu çek
+      - uses: actions/checkout@v4
+
+      # Python kurulumu (cache’li)
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Chromium ve ChromeDriver’ı tek seferlik kur
+      - name: Install Chrome & driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          # Selenium'un beklediği konumlara sembolik link
+          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome
+          sudo ln -sf /usr/bin/chromedriver      /usr/local/bin/chromedriver
+
+      # Python bağımlılıkları
+      - name: Install deps
+        run: pip install selenium
+
+      # Toplu sıralama betiğini çalıştır
+      - name: Run batch script
+        run: |
+          python reorder_pictures.py --batch "${{ github.event.inputs.batch }}"
