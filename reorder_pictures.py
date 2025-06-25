@@ -12,8 +12,11 @@ def run(product_id: int, src_pos: int):
     opts.add_argument("--disable-gpu")
     opts.add_argument("--window-size=1920,1080")
     opts.add_argument("--incognito")
+    
+    # ★ bunu ekle → Selenium’a “Chrome ikili dosyası şu” de
+    opts.binary_location = "/usr/bin/chromium-browser"
+    
     opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-    drv = webdriver.Chrome(service=Service(), options=opts)
 
     BASE   = "https://www.siparis.haydigiy.com"
     LOGIN  = f"{BASE}/kullanici-giris/?ReturnUrl=%2Fadmin"
