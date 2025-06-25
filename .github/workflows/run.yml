@@ -1,0 +1,39 @@
+name: ReorderPictures
+
+on:
+  workflow_dispatch:
+    inputs:
+      product_id:
+        description: "Product ID (numbers only)"
+        required: true
+      src_pos:
+        description: "Which picture should go first? (1-based)"
+        required: true
+
+jobs:
+  reorder:
+    runs-on: ubuntu-latest
+    env:
+      HD_USER: ${{ secrets.HD_USER }}
+      HD_PASS: ${{ secrets.HD_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Install Chrome & driver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          sudo ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
+
+      - name: Install deps
+        run: pip install selenium colorama
+
+      - name: Run script
+        run: |
+          python reorder_pictures.py \
+            --product-id ${{ github.event.inputs.product_id }} \
+            --src-pos    ${{ github.event.inputs.src_pos }}
