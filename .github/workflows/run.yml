@@ -4,25 +4,37 @@ on:
   workflow_dispatch:
     inputs:
       batch:
-        description: "productId:srcPos,productId:srcPos ..."
+        description: "productId:srcPos,productId:srcPos …  (örn. 231321:2,235412:5)"
         required: true
 
 jobs:
   reorder:
     runs-on: ubuntu-latest
-    container: selenium/standalone-chrome:125.0   # Chrome hazır, hızlı!
 
     steps:
+      # Kaynak kodu çek
       - uses: actions/checkout@v4
 
-      - name: Install Python & deps
-        run: |
-          apt-get update -qq
-          apt-get install -y python3 python3-pip
-          pip install selenium
+      # Python kurulumu (cache’li)
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
+      # Chromium ve ChromeDriver’ı tek seferlik kur
+      - name: Install Chrome & driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          # Selenium'un beklediği konumlara sembolik link
+          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome
+          sudo ln -sf /usr/bin/chromedriver      /usr/local/bin/chromedriver
+
+      # Python bağımlılıkları
+      - name: Install deps
+        run: pip install selenium
+
+      # Toplu sıralama betiğini çalıştır
       - name: Run batch script
-        env:
-          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
         run: |
           python reorder_pictures.py --batch "${{ github.event.inputs.batch }}"
