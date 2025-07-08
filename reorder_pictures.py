@@ -26,7 +26,7 @@ def init_driver():
     opts.add_argument("--window-size=1920,1080")
     opts.add_experimental_option("excludeSwitches", ["enable-logging"])
     # GitHub runner’da Chromium yolu; lokalde gerekmez
-    # opts.binary_location = "/usr/bin/chromium-browser"
+    opts.binary_location = "/usr/bin/chromium-browser"
     return webdriver.Chrome(service=Service(), options=opts)
 
 def login(drv):
